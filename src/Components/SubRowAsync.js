@@ -6,15 +6,15 @@ function SubRowAsync({ row }) {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
 
-  const fetchProducts = async (category) => {
-    const response = await axios.get(`https://dummyjson.com/products/category/${category}`).catch(err => console.log(err))
-    setProducts(response.data.products)
+  const fetchProducts = async (category_id) => {
+    const response = await axios.get(`https://api.escuelajs.co/api/v1/categories/${category_id}/products`).catch(err => console.log(err))
+    setProducts(response.data)
     setLoading(false)
   };
 
   useEffect(() => {
-    fetchProducts(row.original);
-  }, [row.original]);
+    fetchProducts(row.original.id);
+  }, [row.original.id]);
 
   return (
     <SubRows

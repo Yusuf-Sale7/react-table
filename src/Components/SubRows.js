@@ -17,22 +17,22 @@ function SubRows({ products, loading }) {
       {products.map(product => (
         <tr key={product.id}>
           <td>
-          <img width="40px" src={product.thumbnail} alt="product"/>
+            #{product.id}
+          </td>
+          <td>
+            <img width="60px" src={product.images[0]} alt="product"/>
           </td>
           <td>
             {product.title}
           </td>
           <td>
-            {product.brand}
+            {product.description}
           </td>
           <td>
             {product.price} $
           </td>
           <td>
-            rating: {product.rating}
-          </td>
-          <td>
-            Stock: {product.stock}
+            Last Update: {product.updatedAt}
           </td>
         </tr>
       ))}

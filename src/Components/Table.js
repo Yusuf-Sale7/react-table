@@ -1,11 +1,12 @@
 import React, { Fragment, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { useExpanded, useTable } from "react-table";
+import { useExpanded, useGlobalFilter, useSortBy, useTable } from "react-table";
 import SubRowAsync from "./SubRowAsync";
+import Search from "./Search";
 
 function Table() {
 
-  const categories_url = 'https://dummyjson.com/products/categories';
+  const categories_url = 'https://api.escuelajs.co/api/v1/categories';
 
   const [ categories, setCategories ] = useState([]);
 
@@ -14,33 +15,48 @@ function Table() {
     setCategories(response.data)
   };
 
-  const categoriesColumns = useMemo(() => [
-    {
-      Header: '...',
-      id: 'expander',
-      Cell: ({ row }) => (
-        <span {...row.getToggleRowExpandedProps()} className="expand">
-          {row.isExpanded ? '➖' : '➕'}
-        </span>
-      )
-    },
-    {
-      Header: '#',
-      Cell: ({row}) => (
-        parseInt(row.id) + 1
-      )
-    },
-    {
-      Header: 'Category',
-      Cell: ({row}) => (
-        row.original
-      )
+  const categoriesColumns = useMemo(() => categories[0] ? Object.keys(categories[0]).map(key => {
+    if (key === 'image') {
+      return {
+        Header: key,
+        accessor: key,
+        disableFilters: true,
+        disableSortBy: true,
+        Cell: ({ row }) => (
+          key === 'image' ?
+          <img width="60px" src={row.original.image} alt="product"/>
+          :
+          row.key
+        )
+      }
     }
-  ], [])
+    else {
+      return {
+        Header: key,
+        accessor: key
+      }
+    }
+  }) : [], [categories])
+
+    // Table Hooks
+    const tableHooks = (hooks) => {
+      hooks.visibleColumns.push((columns) => [
+        {
+          Header: '...',
+          id: 'expander',
+          Cell: ({ row }) => (
+            <span {...row.getToggleRowExpandedProps()} className="expand">
+              {row.isExpanded ? '➖' : '➕'}
+            </span>
+          )
+        },
+        ...columns
+      ])
+    }
 
   const categoriesList = useMemo(() => [...categories], [categories]);
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns: categoriesColumns, data: categoriesList }, useExpanded);
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, preGlobalFilteredRows, setGlobalFilter, state } = useTable({ columns: categoriesColumns, data: categoriesList }, useGlobalFilter, tableHooks, useSortBy, useExpanded);
 
   // Create a function that will render our row sub components
   const renderRowSubComponent = React.useCallback(
@@ -58,6 +74,8 @@ function Table() {
 
   return (
     <>
+      <Search preGlobalFilteredRows={preGlobalFilteredRows} setGlobalFilter={setGlobalFilter} globalFilter={state.globalFilter}/>
+
       <table {...getTableProps()}>
         <thead>
           {
@@ -65,8 +83,11 @@ function Table() {
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {
                   headerGroup.headers.map(column => (
-                    <th {...column.getHeaderProps()} colSpan="2">
+                    <th {...column.getHeaderProps(column.getSortByToggleProps())}>
                       { column.render('Header') }
+                      {
+                        column.isSorted ? column.isSortedDesc ? ' ↓' : ' ↑' : ''
+                      }
                     </th>
                   ))
                 }
@@ -85,7 +106,7 @@ function Table() {
                   <tr {...rowProps}>
                     {
                       row.cells.map(cell => (
-                        <td {...cell.getCellProps()} colSpan="2">
+                        <td {...cell.getCellProps()}>
                           {cell.render('Cell')}
                         </td>
                       ))
